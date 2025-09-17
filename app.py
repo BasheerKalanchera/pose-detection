@@ -6,14 +6,14 @@ from streamlit_webrtc import webrtc_streamer, WebRtcMode, RTCConfiguration
 
 # Set page configuration
 st.set_page_config(
-    page_title="YOLOv8 Pose Estimation",
+    page_title="Pose Estimation",
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-st.title("🤖 Real-Time Pose Estimation using YOLOv8")
-st.write("This app uses YOLOv8-Pose to perform real-time human pose estimation on a live webcam feed.")
+st.title("🤖 Real-Time Pose Estimation")
+st.write("This app uses AI to perform real-time human pose estimation on a live webcam feed.")
 
 # Load the pre-trained YOLOv8-Pose model
 model = YOLO('yolov8n-pose.pt')
@@ -27,6 +27,12 @@ RTC_CONFIGURATION = RTCConfiguration(
 class VideoProcessor:
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
         img = frame.to_ndarray(format="bgr24")
+        
+        # --- Add these two lines to get frame size ---
+        h, w, _ = img.shape
+        st.session_state.frame_size = f"{w}x{h}"
+        # -------------------------
+
         results = model(img, stream=True)
 
         for result in results:
@@ -51,7 +57,14 @@ webrtc_ctx = webrtc_streamer(
 )
 
 st.sidebar.header("About")
-st.sidebar.info("This application is a demonstration of real-time human pose estimation using YOLOv8.")
+st.sidebar.info("This application is a demonstration of real-time human pose estimation using AI")
+
+if "frame_size" not in st.session_state:
+    st.session_state.frame_size = "N/A"
+
+st.sidebar.markdown("---")
+st.sidebar.header("Stream Information")
+st.sidebar.write(f"**Resolution:** {st.session_state.frame_size}")
 
 if webrtc_ctx.state.playing:
     st.success("Webcam is active!")
