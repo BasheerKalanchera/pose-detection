@@ -26,18 +26,31 @@ RTC_CONFIGURATION = RTCConfiguration(
 # Class to process video frames
 class VideoProcessor:
     def recv(self, frame: av.VideoFrame) -> av.VideoFrame:
+        # Convert the frame to a NumPy array (BGR format)
         img = frame.to_ndarray(format="bgr24")
         
-        # --- Add these two lines to get frame size ---
-        h, w, _ = img.shape
-        st.session_state.frame_size = f"{w}x{h}"
-        # -------------------------
+        # --- Force resize to guarantee performance ---
+        img = cv2.resize(img, (640, 480))
+        # ---------------------------------------------
 
+        # Run pose estimation on the frame
         results = model(img, stream=True)
 
+        # Process results
         for result in results:
+            # The plot() method returns a BGR NumPy array with all annotations
             annotated_frame = result.plot()
+            
+            # --- Add this block to draw the resolution on the frame ---
+            h, w, _ = annotated_frame.shape
+            resolution_text = f"Resolution: {w}x{h}"
+            
+            # Position the text at the top-left corner of the frame
+            cv2.putText(annotated_frame, resolution_text, (10, 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+            # -------------------------------------------------------------
 
+        # Convert the annotated frame back to a VideoFrame
         return av.VideoFrame.from_ndarray(annotated_frame, format="bgr24")
 
 # Main app interface
