@@ -4,3 +4,6 @@ __pycache__/
 
 # Model weight files
 *.pt
+
+# Local workout recordings
+*.mp4
