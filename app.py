@@ -174,6 +174,12 @@ with col_video:
             "audio": False
         },
         async_processing=True,
+        # Fixed height so the player and its START/STOP controls fit on phone screens
+        video_html_attrs={
+            "style": {"width": "100%", "height": "400px", "objectFit": "contain"},
+            "controls": False,
+            "autoPlay": True,
+        },
     )
     
     # Keep a reference to the processor so the recording survives pressing STOP
