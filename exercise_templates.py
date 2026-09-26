@@ -40,7 +40,7 @@ SQUAT_TEMPLATE = {
     # Ideal angle ranges for good form
     "ideal_angles": {
         "knee_angle": {
-            "at_bottom": (35, 70),    # Parallel: 60-70°, Deep: 35-60° (based on flexion angles)
+            "at_bottom": (70, 100),   # Interior hip-knee-ankle angle: parallel ~90°, deeper squats go below 90°
             "at_top": (160, 180)      # Standing position (nearly straight legs)
         },
         "hip_angle": {

@@ -176,6 +176,10 @@ with col_video:
         async_processing=True,
     )
     
+    # Keep a reference to the processor so the recording survives pressing STOP
+    if webrtc_ctx.state.playing and webrtc_ctx.video_processor:
+        st.session_state.last_processor = webrtc_ctx.video_processor
+    
     # Status indicator
     if webrtc_ctx.state.playing:
         st.success("✅ Camera active")
@@ -204,6 +208,9 @@ with col_stats:
     if 'show_summary' not in st.session_state:
         st.session_state.show_summary = False
     
+    # Live processor while streaming, otherwise the one kept from the last session
+    active_processor = webrtc_ctx.video_processor or st.session_state.get("last_processor")
+    
     # Summary button controls
     col_btn1, col_btn2, col_btn3 = st.columns(3)
     
@@ -211,8 +218,8 @@ with col_stats:
         if st.button("📋 Show Workout Summary", use_container_width=True, type="primary"):
             st.session_state.show_summary = True
             # Pause recording while viewing summary
-            if hasattr(webrtc_ctx, 'video_processor') and webrtc_ctx.video_processor:
-                webrtc_ctx.video_processor.stop_recording()
+            if active_processor:
+                active_processor.stop_recording()
     
     with col_btn2:
         if st.button("🔄 Reset Workout", use_container_width=True):
@@ -221,20 +228,22 @@ with col_stats:
             if hasattr(webrtc_ctx, 'video_processor') and webrtc_ctx.video_processor:
                 webrtc_ctx.video_processor.clear_recording()
                 webrtc_ctx.video_processor.start_recording()
+            # Forget the recording kept from a stopped session
+            st.session_state.pop("last_processor", None)
             st.rerun()
             
     with col_btn3:
         if st.button("❌ Close Summary", use_container_width=True):
             st.session_state.show_summary = False
             # Resume recording
-            if hasattr(webrtc_ctx, 'video_processor') and webrtc_ctx.video_processor:
-                webrtc_ctx.video_processor.start_recording()
+            if active_processor:
+                active_processor.start_recording()
     
     # Display summary if flag is set
     if st.session_state.show_summary:
-        if hasattr(webrtc_ctx, 'video_processor') and webrtc_ctx.video_processor:
+        if active_processor:
             try:
-                processor = webrtc_ctx.video_processor
+                processor = active_processor
                 
                 # Analyze recorded frames post-workout (same logic as debug_video.py)
                 reps = processor.analyze_recorded_frames()
@@ -407,7 +416,7 @@ with col_stats:
             except Exception as e:
                 st.error(f"Error loading workout data: {str(e)}")
         else:
-            st.warning("Start the camera first to track your workout!")
+            st.warning("No workout recorded yet. Press START, do a few squats, then press STOP and tap Show Workout Summary.")
 
 # Instructions
 with st.expander("📋 How to Use"):
