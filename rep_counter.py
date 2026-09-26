@@ -49,7 +49,8 @@ class RepCounter:
         self.current_rep_scores = []
         self.phase_history = []
     
-    def update(self, knee_angle: float, form_score: float, hip_angle: Optional[float] = None) -> Dict:
+    def update(self, knee_angle: float, form_score: float, hip_angle: Optional[float] = None,
+               timestamp: Optional[float] = None) -> Dict:
         """
         Update rep counter based on current knee angle.
         
@@ -57,11 +58,14 @@ class RepCounter:
             knee_angle: Current knee angle in degrees
             form_score: Current form quality score (0-100)
             hip_angle: Current hip angle in degrees (optional)
+            timestamp: When the frame was captured; defaults to now. Pass it when
+                replaying recorded frames so hold times reflect real timing.
         
         Returns:
             Dictionary with rep status information
         """
         triggers = self.config["triggers"]
+        now = timestamp if timestamp is not None else time.time()
         phase_changed = False
         rep_completed = False
         
@@ -81,7 +85,7 @@ class RepCounter:
             # Waiting for descent to begin
             if knee_angle < triggers["start_descending"]:
                 self.current_phase = "descending"
-                self.current_rep_start_time = time.time()
+                self.current_rep_start_time = now
                 self.min_knee_angle = knee_angle
                 self.current_rep_scores = [form_score]
                 phase_changed = True
@@ -90,14 +94,14 @@ class RepCounter:
             # Going down
             if knee_angle <= triggers["reached_bottom"]:
                 self.current_phase = "bottom"
-                self.bottom_reached_time = time.time()
+                self.bottom_reached_time = now
                 phase_changed = True
         
         elif self.current_phase == "bottom":
             # At the bottom - check if starting to come up
             # Must hold bottom for minimum time to prevent bouncing
             if self.bottom_reached_time:
-                time_at_bottom = time.time() - self.bottom_reached_time
+                time_at_bottom = now - self.bottom_reached_time
                 if time_at_bottom >= self.config["minimum_bottom_hold"]:
                     if knee_angle > self.min_knee_angle + triggers["start_ascending"]:
                         self.current_phase = "ascending"
@@ -130,7 +134,7 @@ class RepCounter:
         if phase_changed:
             self.phase_history.append({
                 "phase": self.current_phase,
-                "time": time.time(),
+                "time": now,
                 "knee_angle": knee_angle
             })
         

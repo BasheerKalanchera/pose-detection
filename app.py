@@ -77,7 +77,8 @@ class VideoProcessor:
                 rep_counter.update(
                     analysis["angles"]["knee"],
                     analysis["overall_score"],
-                    analysis["angles"]["hip"]
+                    analysis["angles"]["hip"],
+                    timestamp=frame_data.get('time')
                 )
         
         # Store results
@@ -119,7 +120,8 @@ class VideoProcessor:
                         # Store both the frame AND keypoints for later analysis
                         self.recorded_frames.append({
                             'frame': annotated_frame.copy(),
-                            'keypoints': keypoints.copy()
+                            'keypoints': keypoints.copy(),
+                            'time': current_time
                         })
                         self.last_record_time = current_time
                     
